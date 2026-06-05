@@ -3,8 +3,14 @@
 A web app for tracking and analyzing academic marks of the batch, with AI-powered search, quizzes, and performance summaries.
 Built with Flask, SQLite, and Groq API.
 
+## Live Demo
+[Open MarksMind](https://marksmind.pythonanywhere.com/)
 
-#### Video Demo: https://youtu.be/Lxt1vOSQKLs
+## GitHub Repository
+[Repository](https://github.com/parth-pd/MarksMind)
+
+## Video Demo
+[Watch Demo](https://youtu.be/Lxt1vOSQKLs)
 
 ---
 
@@ -14,7 +20,7 @@ MarksMind is a full-stack web application that lets students and teachers view, 
 
 I built this as my CS50x Final Project. The idea came from the frustration of managing marks in messy spreadsheets and trying to see at which rank I stand, so I initially tried to convert the marks data into sqlite3 database and doing manual quries, then I thought to make a web app that do this easily for me.So, MarksMind stores everything in a SQLite database and gives you a clean interface to explore it — plus some AI features on top.
 
-Currently the data which I'm using is dummy (made with the help of Claude.ai), but the structure can work for any institution with some minor changes in the codes.
+Currently the project uses dummy/sample student data (to maintain institutional privacy), but the structure can work for any institution with minor code changes.
 
 ---
 
@@ -88,8 +94,8 @@ This way if something breaks or needs updating, I get to know exactly which file
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/parth-pd/project.git
-cd project
+git clone https://github.com/parth-pd/MarksMind.git
+cd MarksMind
 
 # 2. Install dependencies
 pip install flask groq werkzeug
