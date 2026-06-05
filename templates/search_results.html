@@ -1,0 +1,69 @@
+{% if data %}
+
+    <div class="results-header">
+        <h2>Results</h2>
+        <span class="count-badge">{{ count }} students</span>
+    </div>
+
+    <div class="cards-grid">
+        {% for row in data %}
+            <div class="student-card">
+                <div class="card-header">
+                    <div class="avatar">{{ loop.index }}</div>
+                    <div>
+                        <div class="card-name">{{ row['name'] }}</div>
+                        <div class="card-roll">{{ row['roll'] }}</div>
+                    </div>
+                    <span class="batch-badge">{{ row['batch'] | upper }}</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value">{{ row['total'] if row['total'] else '&mdash;' }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">CGPA</div>
+                        <div class="stat-value">{{ row['CGPA'] if row['CGPA'] else '&mdash;' }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Rank</div>
+                        <div class="stat-value">#{{ row['ranking'] if row['ranking'] else '&mdash;' }}</div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="quiz-scores">
+                        QUIZ:
+                                                                {% if row['CalcQuiz1'] %}
+                            Calc {{ row['CalcQuiz1'] }}
+                        {% endif %}
+
+                        {% if row['PhysicsQuiz1'] %}
+                            · Physics {{ row['PhysicsQuiz1'] }}
+                        {% endif %}
+
+                        {% if row['EnglishQuiz1'] %}
+                            · English {{ row['EnglishQuiz1'] }}
+                        {% endif %}
+                        <br>
+
+                        MIDSEM:
+                        {% if row['CalcMid'] %}
+                            Calc {{ row['CalcMid'] }}
+                        {% endif %}
+
+                        {% if row['PhysicsMid'] %}
+                            · Physics {{ row['PhysicsMid'] }}
+                        {% endif %}
+
+                        {% if row['EnglishMid'] %}
+                            English {{ row['EnglishMid'] }}
+                        {% endif %}
+
+                    </span>
+                    <button class="summary-btn" onclick="summary('{{ row['roll'] }}')">Summary</button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endif %}

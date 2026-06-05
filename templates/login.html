@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - MarksMind</title>
+        <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpeg') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+        <script>
+            function toggleMenu() {
+                document.getElementById("mobileMenu").classList.toggle("open");
+            }
+        </script>
+    </head>
+
+    <body class="page-auth">
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">
+                <img src="{{ url_for('static', filename='logo.jpeg') }}" alt="MarksMind logo" class="navbar-logo">
+                <span>MarksMind</span>
+            </a>
+            <div class="navbar-links">
+                <a href="/">Dashboard</a>
+                <a href="/charts">Charts</a>
+                <a href="/tasks">Tasks</a>
+                <a href="/quiz">Quiz</a>
+            </div>
+            <div class="navbar-auth">
+                <a href="/login" class="btn-login">Login</a>
+                <a href="/register" class="btn-getstarted">Get Started</a>
+            </div>
+            <button class="hamburger" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="/">Dashboard</a>
+            <a href="/charts">Charts</a>
+            <a href="/tasks">Tasks</a>
+            <a href="/quiz">Quiz</a>
+            <div class="mobile-menu-auth">
+                <a href="/login" class="btn-outline-small">Login</a>
+                <a href="/register" class="btn-getstarted">Get Started</a>
+            </div>
+        </div>
+
+        <div class="page-content">
+            <div class="form-card">
+                <h2>Welcome back</h2>
+                <p class="subtitle">Login to your MarksMind account</p>
+
+                {% if error %}
+                    <div class="error-msg">{{ error }}</div>
+                {% endif %}
+
+                <form action="/login" method="POST">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input name="username" type="text" placeholder="Enter your username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input name="password" type="password" placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="btn-submit">Login</button>
+                </form>
+
+                <div class="form-footer">
+                    Not registered? <a href="/register">Create an account</a>
+                </div>
+            </div>
+        </div>
+    </body>
+
+</html>

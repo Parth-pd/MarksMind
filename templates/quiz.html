@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Quiz - MarksMind</title>
+        <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpeg') }}">
+        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+        <script>
+            function toggleMenu() {
+                document.getElementById("mobileMenu").classList.toggle("open");
+            }
+
+            let quizdata = [];
+
+            function renderQuiz(data) {
+                quizdata = data;
+                const letters = ["A", "B", "C", "D", "E"];
+
+                document.getElementById("quiz-footer").classList.remove("visible");
+                document.getElementById("score-badge").classList.remove("visible", "good", "okay", "poor");
+
+                let html = `<div class="quiz-meta">
+                <span class="quiz-meta-title">Quiz</span>
+                <span class="quiz-meta-count">${data.length} Questions</span>
+            </div>`;
+
+                for (let i = 0; i < data.length; i++) {
+                    const q = data[i];
+                    const delay = `${i * 0.06}s`;
+
+                    html += `<div class="question-card" data-delay="${delay}">
+                    <div class="question-number">Question ${i + 1}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options-grid" id="options-${i}">`;
+
+                    for (let j = 0; j < q.options.length; j++) {
+                        const letter = letters[j] || (j + 1);
+                        html += `<label class="option-label" id="label-${i}-${j}" onclick="selectOption(${i}, ${j}, this)">
+                        <input type="radio" name="q${i}" value="${q.options[j]}">
+                        <span class="option-letter">${letter}</span>
+                        <span>${q.options[j]}</span>
+                    </label>`;
+                    }
+
+                    html += `</div></div>`;
+                }
+
+                document.getElementById("quiz-container").innerHTML = html;
+                document.querySelectorAll(".question-card").forEach(card => {
+                    card.style.setProperty("--card-delay", card.dataset.delay || "0s");
+                });
+                document.getElementById("quiz-footer").classList.add("visible");
+            }
+
+            function selectOption(qi, oi, clicked) {
+                const allLabels = document.querySelectorAll(`#options-${qi} .option-label`);
+                allLabels.forEach(label => {
+                    label.classList.remove("selected");
+                });
+                clicked.classList.add("selected");
+            }
+
+            function quiz() {
+                const sub = document.getElementById("subject").value;
+                const difficulty = document.getElementById("difficulty").value;
+                const number = document.getElementById("number").value;
+                const type = document.querySelector('input[name="type"]:checked').value;
+
+                showLoading(true);
+                fetch(`/quiz_generator?sub=${encodeURIComponent(sub)}&diff=${encodeURIComponent(difficulty)}&number=${encodeURIComponent(number)}&type=${encodeURIComponent(type)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        showLoading(false);
+                        renderQuiz(data);
+                    })
+                    .catch(() => {
+                        showLoading(false);
+                        alert("Failed to generate quiz. Try again.");
+                    });
+            }
+
+            function desired_quiz() {
+                const query = document.getElementById("desired_quiz").value.trim();
+                if (!query) {
+                    return;
+                }
+
+                showLoading(true);
+                fetch(`/desired_quiz?query=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        showLoading(false);
+                        renderQuiz(data);
+                    })
+                    .catch(() => {
+                        showLoading(false);
+                        alert("Failed to generate quiz. Try again.");
+                    });
+            }
+
+            function showLoading(show) {
+                const loadingState = document.getElementById("loading-state");
+                const button = document.getElementById("btn-generate");
+                const badge = document.getElementById("score-badge");
+
+                document.getElementById("quiz-container").innerHTML = "";
+                document.getElementById("quiz-footer").classList.remove("visible");
+                badge.className = "score-badge";
+
+                if (show) {
+                    loadingState.classList.add("visible");
+                    button.disabled = true;
+                    button.textContent = "Generating...";
+                } else {
+                    loadingState.classList.remove("visible");
+                    button.disabled = false;
+                    button.textContent = "Generate Quiz";
+                }
+            }
+
+            function submitquiz() {
+                const total = quizdata.length;
+                let marks = 0;
+
+                for (let i = 0; i < total; i++) {
+                    const correct = quizdata[i].answer;
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    const allLabels = document.querySelectorAll(`#options-${i} .option-label`);
+
+                    allLabels.forEach(label => {
+                        const radioVal = label.querySelector('input[type="radio"]').value;
+                        label.classList.remove("selected", "correct", "wrong");
+
+                        if (radioVal === correct) {
+                            label.classList.add("correct");
+                        } else if (selected && radioVal === selected.value) {
+                            label.classList.add("wrong");
+                        }
+                    });
+
+                    if (selected && selected.value === correct) {
+                        marks++;
+                    }
+                }
+
+                const badge = document.getElementById("score-badge");
+                const pct = total > 0 ? marks / total : 0;
+                let emoji;
+                let msg;
+                let cls;
+
+                if (pct >= 0.8) {
+                    emoji = "🎉";
+                    msg = `${marks} / ${total} - Excellent!`;
+                    cls = "good";
+                } else if (pct >= 0.5) {
+                    emoji = "👍";
+                    msg = `${marks} / ${total} - Good effort!`;
+                    cls = "okay";
+                } else {
+                    emoji = "📚";
+                    msg = `${marks} / ${total} - Keep practising!`;
+                    cls = "poor";
+                }
+
+                badge.className = `score-badge visible ${cls}`;
+                badge.innerHTML = `<span class="score-emoji">${emoji}</span> ${msg}`;
+
+                document.querySelectorAll('#quiz-container input[type="radio"]').forEach(radio => {
+                    radio.disabled = true;
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                document.getElementById("desired_quiz").addEventListener("keydown", event => {
+                    if (event.key === "Enter") {
+                        desired_quiz();
+                    }
+                });
+            });
+        </script>
+    </head>
+
+    <body class="page-quiz">
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">
+                <img src="{{ url_for('static', filename='logo.jpeg') }}" alt="MarksMind logo" class="navbar-logo">
+                <span>MarksMind</span>
+            </a>
+            <div class="navbar-links">
+                <a href="/">Dashboard</a>
+                <a href="/charts">Charts</a>
+                <a href="/tasks">Tasks</a>
+                <a href="/quiz" class="active">Quiz</a>
+            </div>
+            <div class="navbar-auth">
+                {% if user %}
+                    <span class="auth-user">{{ user['username'] }}</span>
+                    <a href="/logout" class="btn-outline-small">Logout</a>
+                {% else %}
+                    <a href="/login" class="btn-login">Login</a>
+                    <a href="/register" class="btn-getstarted">Get Started</a>
+                {% endif %}
+            </div>
+            <button class="hamburger" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="/">Dashboard</a>
+            <a href="/charts">Charts</a>
+            <a href="/tasks">Tasks</a>
+            <a href="/quiz" class="active">Quiz</a>
+            {% if user %}
+                <a href="/logout">Logout</a>
+            {% else %}
+                <div class="mobile-menu-auth">
+                    <a href="/login" class="btn-outline-small">Login</a>
+                    <a href="/register" class="btn-getstarted">Get Started</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="page">
+            <div class="page-header">
+                <h1>Quiz Generator</h1>
+                <p>AI-powered quizzes tailored to your subject and difficulty</p>
+            </div>
+
+            <div class="config-card">
+                <h2>Configure Quiz</h2>
+
+                <div class="config-grid">
+                    <div class="config-group">
+                        <label>Subject</label>
+                        <select id="subject">
+                            <option value="Calc">Calculus</option>
+                            <option value="Physics">Physics</option>
+                            <option value="English">English</option>
+                            <option value="Chem">Chemistry</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>Difficulty</label>
+                        <select id="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>Number of Questions</label>
+                        <select id="number">
+                            <option value="3">3</option>
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="type-toggle">
+                    <input type="radio" id="mcq" name="type" value="mcq" checked>
+                    <label for="mcq">Multiple Choice (MCQ)</label>
+                    <input type="radio" id="truefalse" name="type" value="truefalse">
+                    <label for="truefalse">True / False</label>
+                </div>
+
+                <button class="btn-generate" id="btn-generate" onclick="quiz()">
+                    Generate Quiz
+                </button>
+            </div>
+
+            <div class="freeform-card">
+                <h2>Or ask anything</h2>
+                <div class="freeform-row">
+                    <input type="text" id="desired_quiz" placeholder="e.g. 5 hard questions on binary trees">
+                    <button class="btn-freeform" onclick="desired_quiz()">Generate</button>
+                </div>
+            </div>
+
+            <div class="loading-state" id="loading-state">
+                <div class="spinner"></div>
+                <span>Generating your quiz...</span>
+            </div>
+
+            <div id="quiz-container"></div>
+
+            <div class="quiz-footer" id="quiz-footer">
+                <button class="btn-submit" onclick="submitquiz()">See Results</button>
+                <div class="score-badge" id="score-badge"></div>
+            </div>
+        </div>
+    </body>
+
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - MarksMind</title>
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpeg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script>
+        function toggleMenu() {
+            document.getElementById("mobileMenu").classList.toggle("open");
+        }
+    </script>
+</head>
+<body class="page-auth">
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">
+            <img src="{{ url_for('static', filename='logo.jpeg') }}" alt="MarksMind logo" class="navbar-logo">
+            <span>MarksMind</span>
+        </a>
+        <div class="navbar-links">
+            <a href="/">Dashboard</a>
+            <a href="/charts">Charts</a>
+            <a href="/tasks">Tasks</a>
+            <a href="/quiz">Quiz</a>
+        </div>
+        <div class="navbar-auth">
+            <a href="/login" class="btn-login">Login</a>
+            <a href="/register" class="btn-getstarted">Get Started</a>
+        </div>
+        <button class="hamburger" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="/">Dashboard</a>
+        <a href="/charts">Charts</a>
+        <a href="/tasks">Tasks</a>
+        <a href="/quiz">Quiz</a>
+        <div class="mobile-menu-auth">
+            <a href="/login" class="btn-outline-small">Login</a>
+            <a href="/register" class="btn-getstarted">Get Started</a>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div class="form-card">
+            <h2>Create account</h2>
+            <p class="subtitle">Join MarksMind to track your academic performance</p>
+
+            {% if error %}
+            <div class="error-msg">{{ error }}</div>
+            {% endif %}
+
+            <form action="/register" method="POST">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input name="username" type="text" placeholder="Choose a username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input name="password" type="password" placeholder="Choose a password">
+                </div>
+                <div class="form-group">
+                    <label>Confirm password</label>
+                    <input name="password_check" type="password" placeholder="Re-enter your password">
+                </div>
+                <button type="submit" class="btn-submit">Create account</button>
+            </form>
+
+            <div class="form-footer">
+                Already registered? <a href="/login">Login here</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

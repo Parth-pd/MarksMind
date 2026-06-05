@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>MarksMind</title>
+        <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpeg') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+        <script>
+            function toggleMenu() {
+                document.getElementById("mobileMenu").classList.toggle("open");
+            }
+
+            function searchData() {
+                const query = document.getElementById("search").value;
+                fetch(`/search?search=${encodeURIComponent(query)}`)
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("result").innerHTML = data;
+                    });
+            }
+
+            function NaturalToSQL() {
+                const query = document.getElementById("natural_query").value;
+                fetch(`/natural_query?natural_query=${encodeURIComponent(query)}`)
+                    .then(res => res.text())
+                    .then(data => {
+                        if (data.startsWith("ERROR:")) {
+                            alert(data.replace("ERROR:", ""));
+                        } else {
+                            document.getElementById("result").innerHTML = data;
+                        }
+                    });
+            }
+
+            function showfilter() {
+                const mode = document.getElementById("sortby").value;
+                const subjectDiv = document.getElementById("subject_div");
+                const rangeDiv = document.getElementById("range_div");
+                const topDiv = document.getElementById("top_div");
+
+                [subjectDiv, rangeDiv, topDiv].forEach(el => el.classList.add("is-hidden"));
+
+                if (mode === "subjects") {
+                    subjectDiv.classList.remove("is-hidden");
+                    rangeDiv.classList.remove("is-hidden");
+                    topDiv.classList.remove("is-hidden");
+                } else if (mode === "total" || mode === "cgpa") {
+                    rangeDiv.classList.remove("is-hidden");
+                    topDiv.classList.remove("is-hidden");
+                } else if (mode === "ranking") {
+                    topDiv.classList.remove("is-hidden");
+                }
+            }
+
+            function applyfilter() {
+                const batch = document.getElementById("batch").value;
+                const factor = document.getElementById("sortby").value;
+                const subject = document.getElementById("subject") ? document.getElementById("subject").value : "none";
+                const min = document.getElementById("min") ? document.getElementById("min").value || 0 : 0;
+                const max = document.getElementById("max") ? document.getElementById("max").value || 999 : 999;
+                const top = document.getElementById("top").value;
+
+                fetch(
+                    `/filter?batch=${encodeURIComponent(batch)}&factor=${encodeURIComponent(factor)}&subject=${encodeURIComponent(subject)}&min=${encodeURIComponent(min)}&max=${encodeURIComponent(max)}&top=${encodeURIComponent(top)}`
+                )
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("result").innerHTML = data;
+                    });
+            }
+
+            function summary(roll) {
+                document.getElementById("summaryText").innerHTML = "Generating summary...";
+                document.getElementById("summaryOverlay").style.display = "flex";
+                fetch(`/summary?roll=${encodeURIComponent(roll)}`)
+                    .then(res => res.text())
+                    .then(sum => {
+                        document.getElementById("summaryText").innerHTML = sum.replaceAll("\n", "<br>");
+                    });
+            }
+
+            function closeModal() {
+                document.getElementById("summaryOverlay").style.display = "none";
+            }
+
+            document.addEventListener("DOMContentLoaded", showfilter);
+        </script>
+    </head>
+
+    <body class="page-home">
+
+        <!-- Navbar -->
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">
+                <img src="{{ url_for('static', filename='logo.jpeg') }}" alt="MarksMind logo" class="navbar-logo">
+                <span>MarksMind</span>
+            </a>
+
+            <div class="navbar-links">
+                <a href="/" class="active">Dashboard</a>
+                <a href="/charts">Charts</a>
+                <a href="/tasks">Tasks</a>
+                <a href="/quiz">Quiz</a>
+            </div>
+
+            <div class="navbar-auth">
+                {% if user %}
+                    <span class="auth-user">{{ user['username'] }}</span>
+                    <a href="/logout" class="btn-outline-small">Logout</a>
+                {% else %}
+                    <a href="/login" class="btn-login">Login</a>
+                    <a href="/register" class="btn-getstarted">Get Started</a>
+                {% endif %}
+            </div>
+
+            <button class="hamburger" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+
+        <!-- Mobile drawer -->
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="/" class="active">Dashboard</a>
+            <a href="/charts">Charts</a>
+            <a href="/tasks">Tasks</a>
+            <a href="/quiz">Quiz</a>
+            {% if user %}
+                <a href="/logout">Logout</a>
+            {% else %}
+                <div class="mobile-menu-auth">
+                    <a href="/login" class="btn-outline-small">Login</a>
+                    <a href="/register" class="btn-getstarted">Get Started</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="page-content">
+
+            <!-- Search / Filter / AI -->
+            <div class="query-section">
+                <div class="section-label">Search & filter</div>
+
+                <div class="search-row">
+                    <input name="search" id="search" type="text" placeholder="Search by name or roll number..." oninput="searchData()">
+                </div>
+
+                <div class="divider">
+                    <div class="divider-line"></div>
+                    <span>or filter manually</span>
+                    <div class="divider-line"></div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <span class="filter-label">Batch</span>
+                        <select id="batch">
+                            <option value="all">All</option>
+                            {% for batch in batches %}
+                                <option value="{{ batch }}">{{ batch.upper() }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Sort by</span>
+                        <select id="sortby" onchange="showfilter()">
+                            <option value="no_filter">No filter</option>
+                            <option value="subjects">Subjects</option>
+                            <option value="total">Total</option>
+                            <option value="ranking">Ranking</option>
+                            <option value="cgpa">CGPA</option>
+                        </select>
+                    </div>
+                    <div class="filter-group is-hidden" id="subject_div">
+                        <span class="filter-label">Subject</span>
+                        <select id="subject">
+                            {% for subject in subjects %}
+                                <option value="{{ subject }}">{{ subject }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group is-hidden" id="range_div">
+                        <span class="filter-label">Min</span>
+                        <input type="number" id="min" class="filter-input-small" placeholder="0" value="0">
+                        <span class="filter-label">Max</span>
+                        <input type="number" id="max" class="filter-input-small">
+                    </div>
+                    <div class="filter-group is-hidden" id="top_div">
+                        <span class="filter-label">Top N</span>
+                        <select id="top">
+                            <option value="all">All</option>
+                            <option value="3">3</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+                    <button class="btn-solid filter-action" onclick="applyfilter()">Analyse</button>
+                </div>
+
+                <div class="divider">
+                    <div class="divider-line"></div>
+                    <span>or ask in plain english</span>
+                    <div class="divider-line"></div>
+                </div>
+
+                <div class="search-row">
+                    <input type="text" id="natural_query" placeholder='Try "top 5 in ECE" or "students with CGPA above 8"'>
+                    <button class="btn-solid" onclick="NaturalToSQL()">Ask AI</button>
+                </div>
+            </div>
+
+            <!-- Results injected here -->
+            <div id="result">
+                {% if data %}
+                    <div class="results-header">
+                        <h2>Academic records</h2>
+                        <span class="count-badge">{{ count }} students</span>
+                    </div>
+                    <div class="cards-grid">
+                        {% for row in data %}
+                            <div class="student-card">
+                                <div class="card-header">
+                                    <div class="avatar">{{ loop.index }}</div>
+                                    <div>
+                                        <div class="card-name">{{ row['name'] }}</div>
+                                        <div class="card-roll">{{ row['roll'] }}</div>
+                                    </div>
+                                    <span class="batch-badge">{{ row['batch'] | upper }}</span>
+                                </div>
+                                <div class="card-stats">
+                                    <div class="stat">
+                                        <div class="stat-label">Total</div>
+                                        <div class="stat-value">{{ row['total'] if row['total'] else '—' }}</div>
+                                    </div>
+                                    <div class="stat">
+                                        <div class="stat-label">CGPA</div>
+                                        <div class="stat-value">{{ row['CGPA'] if row['CGPA'] else '—' }}</div>
+                                    </div>
+                                    <div class="stat">
+                                        <div class="stat-label">Rank</div>
+                                        <div class="stat-value">#{{ row['ranking'] if row['ranking'] else '—' }}</div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <span class="quiz-scores">
+                                        QUIZ:
+                                                                {% if row['CalcQuiz1'] %}
+                            Calc {{ row['CalcQuiz1'] }}
+                        {% endif %}
+
+                        {% if row['PhysicsQuiz1'] %}
+                            · Physics {{ row['PhysicsQuiz1'] }}
+                        {% endif %}
+
+                        {% if row['EnglishQuiz1'] %}
+                            · English {{ row['EnglishQuiz1'] }}
+                        {% endif %}
+                        <br>
+
+                        MIDSEM:
+                        {% if row['CalcMid'] %}
+                            Calc {{ row['CalcMid'] }}
+                        {% endif %}
+
+                        {% if row['PhysicsMid'] %}
+                            · Physics {{ row['PhysicsMid'] }}
+                        {% endif %}
+
+                        {% if row['EnglishMid'] %}
+                            English {{ row['EnglishMid'] }}
+                        {% endif %}
+                        </span>
+                                    <button class="summary-btn" onclick="summary('{{ row['roll'] }}')">Summary</button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Modal -->
+        <div id="summaryOverlay" onclick="closeModal()">
+            <div class="modal-box" onclick="event.stopPropagation()">
+                <h3>Performance summary</h3>
+                <pre id="summaryText">Generating summary... ⏳</pre>
+                <button class="modal-close" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+
+    </body>
+
+</html>

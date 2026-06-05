@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tasks - MarksMind</title>
+        <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpeg') }}">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    </head>
+
+    <body class="page-tasks">
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">
+                <img src="{{ url_for('static', filename='logo.jpeg') }}" alt="MarksMind logo" class="navbar-logo">
+                <span>MarksMind</span>
+            </a>
+            <div class="navbar-links">
+                <a href="/">Dashboard</a>
+                <a href="/charts">Charts</a>
+                <a href="/tasks" class="active">Tasks</a>
+                <a href="/quiz">Quiz</a>
+            </div>
+            <div class="navbar-auth">
+                {% if user %}
+                    <span class="auth-user">{{ user['username'] }}</span>
+                    <a href="/logout" class="btn-outline-small">Logout</a>
+                {% else %}
+                    <a href="/login" class="btn-login">Login</a>
+                    <a href="/register" class="btn-getstarted">Get Started</a>
+                {% endif %}
+            </div>
+            <button class="hamburger" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="/">Dashboard</a>
+            <a href="/charts">Charts</a>
+            <a href="/tasks" class="active">Tasks</a>
+            <a href="/quiz">Quiz</a>
+            {% if user %}
+                <a href="/logout">Logout</a>
+            {% else %}
+                <div class="mobile-menu-auth">
+                    <a href="/login" class="btn-outline-small">Login</a>
+                    <a href="/register" class="btn-getstarted">Get Started</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="page-content">
+            <div class="page-header">
+                <h1>Tasks</h1>
+                <p>Logged in as <strong>{{ user['username'] }}</strong></p>
+            </div>
+
+            <div class="add-card">
+                <div class="add-card-label">New task</div>
+                <form action="/tasks" method="POST">
+                    <div class="add-form-row">
+                        <input type="text" name="title" placeholder="What needs to be done?" autocomplete="off" required>
+                        <input type="date" name="deadline">
+                        <button type="submit" class="btn-add">Add</button>
+                    </div>
+                </form>
+            </div>
+
+            {% set active_tasks = data | selectattr('done', 'equalto', 0) | list %}
+            {% set done_tasks = data | selectattr('done', 'ne', 0) | list %}
+
+            <div class="section-label">
+                Active <span class="count-pill">{{ active_tasks | length }}</span>
+            </div>
+
+            <div class="task-list">
+                {% if active_tasks %}
+                    {% for row in active_tasks %}
+                        <div class="task-item">
+                            <form action="/tasks/{{ row['id'] }}" method="POST" class="task-checkbox-form">
+                                <input type="checkbox" name="done" id="chk-{{ row['id'] }}" onchange="this.form.submit()">
+                                <label for="chk-{{ row['id'] }}" class="checkbox-box" title="Mark done">
+                                    <svg class="checkmark-svg" width="9" height="7" viewBox="0 0 9 7" fill="none">
+                                        <path d="M1 3.5L3.5 6L8 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </label>
+                            </form>
+
+                            <div class="task-body">
+                                <div class="task-title">{{ row['title'] }}</div>
+                                {% if row['deadline'] %}
+                                    <div class="task-deadline {% if row['deadline'] < today %}overdue{% endif %}">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                            <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2" />
+                                            <path d="M4 1v2M8 1v2M1 5h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                                        </svg>
+                                        {% if row['deadline'] < today %}overdue &middot; {% endif %}
+                                        {{ row['deadline'] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <form action="/delete/{{ row['id'] }}" method="POST" onsubmit="return confirm('Delete this task?')">
+                                <button type="submit" class="btn-delete" title="Delete">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                        <path d="M2 4h10M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4m1 0l-.7 7.5a.5.5 0 01-.5.5H5.2a.5.5 0 01-.5-.5L4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No active tasks &mdash; you're all caught up!</div>
+                {% endif %}
+            </div>
+
+            {% if done_tasks %}
+                <div class="section-label">
+                    Completed <span class="count-pill">{{ done_tasks | length }}</span>
+                </div>
+
+                <div class="task-list">
+                    {% for row in done_tasks %}
+                        <div class="task-item done">
+                            <form action="/tasks/{{ row['id'] }}" method="POST" class="task-checkbox-form">
+                                <input type="checkbox" name="done" id="chk-done-{{ row['id'] }}" checked onchange="this.form.submit()">
+                                <label for="chk-done-{{ row['id'] }}" class="checkbox-box" title="Mark undone">
+                                    <svg class="checkmark-svg" width="9" height="7" viewBox="0 0 9 7" fill="none">
+                                        <path d="M1 3.5L3.5 6L8 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </label>
+                            </form>
+
+                            <div class="task-body">
+                                <div class="task-title">{{ row['title'] }}</div>
+                                {% if row['deadline'] %}
+                                    <div class="task-deadline">
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                            <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2" />
+                                            <path d="M4 1v2M8 1v2M1 5h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                                        </svg>
+                                        {{ row['deadline'] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <form action="/delete/{{ row['id'] }}" method="POST" onsubmit="return confirm('Delete this task?')">
+                                <button type="submit" class="btn-delete" title="Delete">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                        <path d="M2 4h10M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4m1 0l-.7 7.5a.5.5 0 01-.5.5H5.2a.5.5 0 01-.5-.5L4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <script>
+            function toggleMenu() {
+                document.getElementById("mobileMenu").classList.toggle("open");
+            }
+        </script>
+    </body>
+
+</html>
