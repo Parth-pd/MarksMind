@@ -9,8 +9,28 @@ Built with Flask, SQLite, and Groq API.
 ## GitHub Repository
 [Repository](https://github.com/parth-pd/MarksMind)
 
-## Video Demo
-[Watch Demo](https://youtu.be/Lxt1vOSQKLs)
+## Screenshots
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Natural Language Querying
+![Natural Query](screenshots/natural-query.png)
+
+### AI Quiz Generator
+![Quiz Generator](screenshots/quiz.png)
+
+### Charts & Analytics
+![Charts](screenshots/charts.png)
+
+### AI Performance Summary
+![Summary](screenshots/summary.png)
+
+### Authentication
+![Authentication](screenshots/auth.png)
+
+### Study Tasks
+![Tasks](screenshots/tasks.png)
+
 
 ---
 
